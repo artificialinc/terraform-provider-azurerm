@@ -88,6 +88,28 @@ The following Environment Variables must be set in your shell prior to running a
 - `ARM_TEST_LOCATION_ALT`
 - `ARM_TEST_LOCATION_ALT2`
 
+Artificial Notes:
+
+How to set these:
+
+```bash
+export ARM_SUBSCRIPTION_ID=fe835328-f1b4-418c-9540-fa000ec50f74
+export sp=$(az ad sp create-for-rbac --name terraform-provider-acc-sp \
+                         --role contributor \
+                         --scopes /subscriptions/$ARM_SUBSCRIPTION_ID)
+
+export ARM_CLIENT_ID=$(echo $sp | jq -r '.appId')
+export ARM_CLIENT_SECRET=$(echo $sp | jq -r '.password')
+export ARM_TENANT_ID=$(echo $sp | jq -r '.tenant')
+export ARM_TEST_LOCATION='eastus'
+export ARM_TEST_LOCATION_ALT='eastus2'
+export ARM_TEST_LOCATION_ALT2='westus'
+
+make acctests SERVICE=compute TESTARGS='-run=TestAccSharedImage_withHibernationEnabled' TESTTIMEOUT='60m'
+
+az ad sp delete --id $(az ad sp list --display-name terraform-provider-acc-sp | jq -r '.[0].id')
+```
+
 **Note:** Acceptance tests create real resources in Azure which often cost money to run.
 
 ---
